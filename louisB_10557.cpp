@@ -5,7 +5,7 @@
 
 using namespace std;
 
-const int INFINITY = 1000*1000*1000;
+const int INFTY = 1000*1000*1000;
 
 int main() {
     ios::sync_with_stdio(false);
@@ -13,7 +13,7 @@ int main() {
 
     int nbNodes;
     while (cin >> nbNodes) {
-        if (n == -1)
+        if (nbNodes == -1)
             break ;
 
         const int start = 0;
@@ -27,26 +27,54 @@ int main() {
             for (int neighbour = 0; neighbour < nbNeighbours; ++neighbour) {
                 int extr;
                 cin >> extr;
-                graph[node-1].push_back(extr-1);
+                graph[node].push_back(extr-1);
             }
         }
 
-        vector<int> dyna(nbNodes, -INFINITY);
+        vector<int> dyna(nbNodes, -INFTY);
         dyna[start] = 100;
         for (int k = 1; k < nbNodes; ++k) {
             for (int node = 0; node < nbNodes; ++node) {
-                for (const auto& edge : node) {
-                    if (dyna[node] >= 0) {
-                        dyna[edge.extr] = max(dyna[edge.extr], dyna[node] + energy[node]);
+                for (const auto& edge : graph[node]) {
+                    if (dyna[node] > 0) {
+                        dyna[edge] = max(dyna[edge], dyna[node] + energy[node]);
                     }
                 }
             }
         }
 
-        if (dyna[arrival] != -INFINITY)
+        if (dyna[arrival] > 0)
             cout << "winnable\n";
         else {
-            
+            vector<vector<bool>> isOk(nbNodes, vector<bool>(nbNodes, false));
+            for (int node = 0; node < nbNodes; ++node) {
+                for (const auto& edge : graph[node]) {
+                    isOk[node][edge] = true;
+                }
+            }
+
+            for (int k = 0; k < nbNodes; ++k) {
+                for (int i = 0; i < nbNodes; ++i) {
+                    for (int j = 0; j < nbNodes; ++j) {
+                        isOk[i][j] = isOk[i][j] | (isOk[i][k] & isOk[k][j]);
+                    }
+                }
+            }
+
+            for (int node = 0; node < nbNodes; ++node) {
+                for (const auto& edge : graph[node]) {
+                    if (dyna[node] > 0) {
+                        int newWeight = dyna[node] + energy[node];
+                        if (dyna[edge] < newWeight && isOk[edge][arrival]) {
+                            cout << "winnable\n";
+                            goto nextTest;
+                        }
+                    }
+                }
+            }
+
+            cout << "hopeless\n";
+            nextTest: ;
         }
     }
 }
